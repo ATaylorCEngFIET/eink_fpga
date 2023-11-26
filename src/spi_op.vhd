@@ -19,7 +19,6 @@ entity spi_op is generic(
         o_mosi : out std_logic;
         o_sclk : out std_logic;
         o_done : out std_logic
-
 );
 end entity;
 
@@ -53,8 +52,11 @@ architecture rtl of spi_op is
     signal s_csn                : std_logic :='1';
     signal s_bytes              : unsigned(3 downto 0):=(others=>'0');
     signal s_byte_cnt           : unsigned(3 downto 0):=(others=>'0');
+    signal s_done               : std_logic;
 
 begin 
+
+o_done <= s_done;
 
 csn_cnrtl: process(i_clk)
 begin
@@ -66,7 +68,7 @@ begin
         elsif s_bytes = s_byte_cnt then
             s_csn <= '1';
             s_byte_cnt  <= (others =>'0');
-        elsif o_done = '1' then 
+        elsif s_done = '1' then 
             s_byte_cnt <= s_byte_cnt + 1;
         end if;        
     end if;
@@ -76,7 +78,7 @@ fsm_cntrl: process(i_clk)
 begin
     if rising_edge(i_clk) then 
         s_load <= '0';
-        o_done <= '0';
+        s_done <= '0';
         case s_current_state is 
             when idle => 
                 if i_load = '1' then 
@@ -92,7 +94,7 @@ begin
                 if s_tmr = (s_tmr'range =>'0') then 
                     s_current_state <= idle;
                     s_busy <= '0';
-                    o_done <= '1';
+                    s_done <= '1';
                 end if;
         end case;
     end if;
