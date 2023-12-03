@@ -107,12 +107,15 @@ architecture rtl of eink_cntl is
 
 begin 
 
+o_addr <= std_logic_vector(to_unsigned(s_data_byte,13));
+o_rd_en <= s_rd_en;
+
 process(i_clk)
 begin
     if rising_edge(i_clk) then 
         o_load  <= '0';
         o_done  <= '0';
-        s_rd_en <= '0';
+        s_rd_en <= '1';
         case s_current_state is 
             when idle =>
                 if i_config = '1' then
@@ -182,8 +185,7 @@ begin
                     s_current_state <= program_array_cmd_done; 
                 end if;
             when program_array_cmd_done =>
-                if i_done = '1' then 
-                    s_address <= (others )
+                if i_done = '1' then                 
                     s_current_state <= data_byte;
                 end if;
 
@@ -194,15 +196,17 @@ begin
                     if i_busy = '0' then
                         o_load <= '1';
                         o_dc   <= '1';
+                        s_data_byte <= s_data_byte + 1;
                         o_bytes <= std_logic_vector(to_unsigned(1,13));
-                        o_data  <= x"f0";
+                        o_data  <= i_data;--x"f0";
                         s_current_state <= data_byte_end; 
                     end if;
                 end if;
+
             when data_byte_end =>
                 if i_done = '1' then 
                     s_current_state <= data_byte;
-                    s_data_byte <= s_data_byte + 1;
+                    --s_data_byte <= s_data_byte + 1;
                 end if;
 
             when post_cmd =>

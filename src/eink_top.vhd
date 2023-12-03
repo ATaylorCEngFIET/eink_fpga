@@ -12,6 +12,9 @@ entity eink_top is
         -- bram interface 
         o_addr      : out std_logic_vector(12 downto 0);
         o_rd_en     : out std_logic; 
+        o_clk       : out std_logic;
+        o_data      : out std_logic_vector(7 downto 0);
+        o_web       : out std_logic_vector(0 downto 0);
         i_data      : in  std_logic_vector(7 downto 0);
 
         -- spi output interface 
@@ -37,6 +40,10 @@ architecture rtl of eink_top is
     signal s_bytes: std_logic_vector(12 downto 0);
 
 begin
+
+    o_web <= (others =>'0');
+    o_data<= (others =>'0');
+    o_clk <= i_clk;
 
 spi_op_inst : entity work.spi_op
     generic map (
