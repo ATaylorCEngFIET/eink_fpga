@@ -10,9 +10,9 @@ entity eink_top is
         o_done      : out std_logic;
 
         -- bram interface 
-        --o_addr      : out std_logic_vector(12 downto 0);
-        --o_rd_en     : out std_logic; 
-        --i_data      : in  std_logic_vector(7 downto 0);
+        o_addr      : out std_logic_vector(12 downto 0);
+        o_rd_en     : out std_logic; 
+        i_data      : in  std_logic_vector(7 downto 0);
 
         -- spi output interface 
         i_busy : in std_logic;
@@ -34,7 +34,7 @@ architecture rtl of eink_top is
 
     signal s_busy : std_logic;
     signal s_done : std_logic;
-    signal s_bytes: std_logic_vector(3 downto 0);
+    signal s_bytes: std_logic_vector(12 downto 0);
 
 begin
 
@@ -63,9 +63,9 @@ eink_cntrl_inst : entity work.eink_cntl port map(
     i_config    => i_config,
     o_done      => o_done,
     i_busy      => i_busy,
-   -- o_addr      => o_addr, 
-   -- o_rd_en     => o_rd_en,
-   -- i_data      => i_data,
+    o_addr      => o_addr, 
+    o_rd_en     => o_rd_en,
+    i_data      => i_data,
     i_done      => s_done,
     o_load      => s_load,
     o_dc        => s_dc,

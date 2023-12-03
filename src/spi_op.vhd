@@ -5,13 +5,14 @@ use ieee.math_real.all;
 
 entity spi_op is generic(
     g_clk_freq : integer := 100000000;
+    g_cs_delay : integer := 10000;
     g_spi_clk  : integer := 1000000 
 );
     port(
         i_clk  : in std_logic; 
         i_load : in std_logic;
         i_dc   : in std_logic;
-        i_bytes: in std_logic_vector(3 downto 0);
+        i_bytes: in std_logic_vector(12 downto 0);
         i_data : in std_logic_vector(7 downto 0);
         o_csn  : out std_logic;
         o_dc   : out std_logic;
@@ -33,7 +34,7 @@ architecture rtl of spi_op is
         return integer(res - 1.0);
     end;
 
-    type fsm is (idle, load, complete);
+    type fsm is (idle, load, complete,cs_del);
 
     constant c_fe_det : std_logic_vector(1 downto 0):= "10";
 
@@ -43,36 +44,37 @@ architecture rtl of spi_op is
     signal s_current_state      : fsm :=idle;
     signal s_load               : std_logic:='0';
     signal s_payload            : std_logic_vector(7 downto 0):=(others =>'0');
-    signal s_dc                 : std_logic:='0';
-    signal s_sck                : std_logic:='0';
+    signal s_dc                 : std_logic:='1';
+    signal s_sck                : std_logic:='1';
     signal s_sck_fe             : std_logic:='0'; 
     signal s_tmr                : std_logic_vector(7 downto 0) := (others =>'0');
     signal s_fe_det             : std_logic_vector(1 downto 0);
     signal s_busy               : std_logic :='0';
     signal s_csn                : std_logic :='1';
-    signal s_bytes              : unsigned(3 downto 0):=(others=>'0');
-    signal s_byte_cnt           : unsigned(3 downto 0):=(others=>'0');
+    signal s_bytes              : unsigned(12 downto 0):=(others=>'0');
+    signal s_byte_cnt           : unsigned(12 downto 0):=(others=>'0');
     signal s_done               : std_logic;
+    signal s_delay_cs           : integer range 0 to 16383 := 0;
 
 begin 
 
 o_done <= s_done;
 
-csn_cnrtl: process(i_clk)
-begin
-    if rising_edge(i_clk) then
-        if i_load = '1' then 
-            s_bytes     <= unsigned(i_bytes);
-            s_csn       <= '0';
-            
-        elsif s_bytes = s_byte_cnt then
-            s_csn <= '1';
-            s_byte_cnt  <= (others =>'0');
-        elsif s_done = '1' then 
-            s_byte_cnt <= s_byte_cnt + 1;
-        end if;        
-    end if;
-end process;
+--csn_cnrtl: process(i_clk)
+--begin
+--    if rising_edge(i_clk) then
+--        if i_load = '1' then 
+--            s_bytes     <= unsigned(i_bytes);
+--            s_csn       <= '0';
+--            
+--        elsif s_bytes = s_byte_cnt then
+--            s_csn <= '1';
+--            s_byte_cnt  <= (others =>'0');
+--        elsif s_done = '1' then 
+--            s_byte_cnt <= s_byte_cnt + 1;
+--        end if;        
+--    end if;
+--end process;
 
 fsm_cntrl: process(i_clk)
 begin
@@ -83,7 +85,7 @@ begin
             when idle => 
                 if i_load = '1' then 
                     s_dc      <= i_dc;
-                   
+                    s_csn       <= '0';
                     s_busy <= '1'; 
                     s_load <= '1';
                     s_current_state <= load;
@@ -92,9 +94,18 @@ begin
                 s_current_state <= complete;
             when complete =>
                 if s_tmr = (s_tmr'range =>'0') then 
+                    s_current_state <= cs_del;
+                    s_delay_cs <= 0;
+                end if;
+            when cs_del =>
+                if s_delay_cs = (g_cs_delay-1) then
                     s_current_state <= idle;
                     s_busy <= '0';
                     s_done <= '1';
+                    s_csn  <= '1';
+                else 
+                    s_delay_cs <= s_delay_cs + 1;
+                    s_csn  <= '1';
                 end if;
         end case;
     end if;
@@ -136,11 +147,11 @@ begin
   end if;
 end process;
 
-o_busy <= s_busy or i_load; 
-o_mosi <= s_data_reg(s_data_reg'high);
-o_sclk <= s_sck when s_busy = '1' else '0';
-o_dc <= s_dc;
-o_csn <= s_csn;
+o_busy  <= s_busy or i_load; 
+o_mosi  <= s_data_reg(s_data_reg'high);
+o_sclk  <= s_sck when s_busy = '1' else '0';
+o_dc    <= s_dc;
+o_csn   <= s_csn;
 
 
 end architecture;
