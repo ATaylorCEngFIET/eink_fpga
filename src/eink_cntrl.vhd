@@ -11,7 +11,7 @@ entity eink_cntl is
         i_busy      : in std_logic;
         
         -- bram interface 
-        o_addr      : out std_logic_vector(12 downto 0);
+        o_addr      : out std_logic_vector(14 downto 0);
         o_rd_en     : out std_logic; 
         i_data      : in  std_logic_vector(7 downto 0);
 
@@ -101,13 +101,14 @@ architecture rtl of eink_cntl is
     signal s_data_byte     : integer := 0; 
     signal s_byte_pos      : integer := 0;
     signal s_wave_byte     : integer := 0;
+    signal s_addr_byte     : integer := 0;
 
     signal s_address       : unsigned(12 downto 0);
     signal s_rd_en         : std_logic;
 
 begin 
 
-o_addr <= std_logic_vector(to_unsigned(s_data_byte,13));
+o_addr <= std_logic_vector(to_unsigned(s_addr_byte,15));
 o_rd_en <= s_rd_en;
 
 process(i_clk)
@@ -159,6 +160,7 @@ begin
                 if s_wave_byte = (c_wave_bytes - 1) then 
                     s_current_state <= program_array_cmd;
                     s_data_byte <= 0;
+                    s_addr_byte <= 0;
                 else
                     if i_busy = '0' then
                         o_load <= '1';
@@ -196,7 +198,7 @@ begin
                     if i_busy = '0' then
                         o_load <= '1';
                         o_dc   <= '1';
-                        s_data_byte <= s_data_byte + 1;
+                        
                         o_bytes <= std_logic_vector(to_unsigned(1,13));
                         o_data  <= i_data;--x"f0";
                         s_current_state <= data_byte_end; 
@@ -206,6 +208,8 @@ begin
             when data_byte_end =>
                 if i_done = '1' then 
                     s_current_state <= data_byte;
+                    s_data_byte <= s_data_byte + 1;
+                    s_addr_byte <= s_addr_byte + 1;
                     --s_data_byte <= s_data_byte + 1;
                 end if;
 

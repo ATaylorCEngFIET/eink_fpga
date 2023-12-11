@@ -60,22 +60,6 @@ begin
 
 o_done <= s_done;
 
---csn_cnrtl: process(i_clk)
---begin
---    if rising_edge(i_clk) then
---        if i_load = '1' then 
---            s_bytes     <= unsigned(i_bytes);
---            s_csn       <= '0';
---            
---        elsif s_bytes = s_byte_cnt then
---            s_csn <= '1';
---            s_byte_cnt  <= (others =>'0');
---        elsif s_done = '1' then 
---            s_byte_cnt <= s_byte_cnt + 1;
---        end if;        
---    end if;
---end process;
-
 fsm_cntrl: process(i_clk)
 begin
     if rising_edge(i_clk) then 

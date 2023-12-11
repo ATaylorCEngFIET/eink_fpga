@@ -10,7 +10,7 @@ entity eink_top is
         o_done      : out std_logic;
 
         -- bram interface 
-        o_addr      : out std_logic_vector(12 downto 0);
+        o_addr      : out std_logic_vector(14 downto 0);
         o_rd_en     : out std_logic; 
         o_clk       : out std_logic;
         o_data      : out std_logic_vector(7 downto 0);
